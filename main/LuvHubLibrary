@@ -86,8 +86,6 @@ function LuvHubUI:CreateWindow(Config)
         Title = Config.Title or "LuvHub UI",
         Tabs = {},
         Theme = self.Theme,
-        ToggleKey = Config.ToggleKey or Enum.KeyCode.RightControl,
-        IsToggled = true
     }
     setmetatable(Window, self)
 
@@ -100,12 +98,27 @@ function LuvHubUI:CreateWindow(Config)
     SG.ResetOnSpawn = false
     Window.Gui = SG
 
-    local MF = Instance.new("CanvasGroup", SG)
-    MF.Size = UDim2.new(0, 500, 0, 350)
-    MF.Position = UDim2.new(0.5, -250, 0.5, -175)
+    -- Tombol Toggle (Buka GUI)
+    local ToggleBtn = Instance.new("ImageButton", SG)
+    ToggleBtn.BackgroundColor3 = self.Theme.Sidebar
+    ToggleBtn.AnchorPoint = Vector2.new(0, 0.5)
+    ToggleBtn.Position = UDim2.new(0, 20, 0.5, 0)
+    ToggleBtn.Size = UDim2.new(0, 40, 0, 40)
+    ToggleBtn.Image = "rbxassetid://81111630423385" 
+    ToggleBtn.Visible = false
+    ToggleBtn.Draggable = true
+    Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 12)
+    Instance.new("UIStroke", ToggleBtn).Color = self.Theme.Accent
+
+    -- Wadah Utama (Dikembalikan ukurannya ke 400x260 dan tepat di tengah)
+    local MF = Instance.new("Frame", SG)
     MF.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    MF.Active = true; MF.Draggable = true
-    Instance.new("UICorner", MF).CornerRadius = UDim.new(0, 8)
+    MF.AnchorPoint = Vector2.new(0.5, 0.5)
+    MF.Position = UDim2.new(0.5, 0, 0.5, 0)
+    MF.Size = UDim2.new(0, 400, 0, 260) 
+    MF.Active = true
+    MF.Draggable = true
+    Instance.new("UICorner", MF).CornerRadius = UDim.new(0, 10)
     Window.MainFrame = MF
 
     local UIGradient = Instance.new("UIGradient", MF)
@@ -115,35 +128,60 @@ function LuvHubUI:CreateWindow(Config)
     }
     UIGradient.Rotation = 45
 
-    local TopBar = Instance.new("Frame", MF)
-    TopBar.Size = UDim2.new(1, 0, 0, 35); TopBar.BackgroundTransparency = 1
+    local InnerFrame = Instance.new("Frame", MF)
+    InnerFrame.Size = UDim2.new(1, 0, 1, 0)
+    InnerFrame.BackgroundTransparency = 1
+    InnerFrame.ClipsDescendants = true
+    Instance.new("UICorner", InnerFrame).CornerRadius = UDim.new(0, 10)
+
+    -- Tombol Tutup & Minimize (Dikembalikan posisinya seperti asli)
+    local CloseBtn = Instance.new("TextButton", InnerFrame)
+    CloseBtn.Text = "X"; CloseBtn.TextColor3 = Color3.fromRGB(255, 80, 80)
+    CloseBtn.BackgroundTransparency = 1; CloseBtn.Font = Enum.Font.GothamBold
+    CloseBtn.Size = UDim2.new(0, 25, 0, 25); CloseBtn.Position = UDim2.new(0, 370, 0, 5)
     
-    local TitleL = Instance.new("TextLabel", TopBar)
+    local MinBtn = Instance.new("TextButton", InnerFrame)
+    MinBtn.Text = "-"; MinBtn.TextColor3 = self.Theme.SubText
+    MinBtn.BackgroundTransparency = 1; MinBtn.Font = Enum.Font.GothamBold
+    MinBtn.Size = UDim2.new(0, 25, 0, 25); MinBtn.Position = UDim2.new(0, 345, 0, 5)
+
+    local TitleL = Instance.new("TextLabel", InnerFrame)
     TitleL.Text = Window.Title; TitleL.TextColor3 = self.Theme.Accent
-    TitleL.Font = Enum.Font.GothamBlack; TitleL.TextSize = 12
-    TitleL.Position = UDim2.new(0, 15, 0, 0); TitleL.Size = UDim2.new(0, 200, 1, 0)
+    TitleL.Font = Enum.Font.GothamBlack; TitleL.TextSize = 11
+    TitleL.Position = UDim2.new(0, 15, 0, 10); TitleL.Size = UDim2.new(0, 200, 0, 15)
     TitleL.BackgroundTransparency = 1; TitleL.TextXAlignment = Enum.TextXAlignment.Left
 
-    local Sidebar = Instance.new("ScrollingFrame", MF)
-    Sidebar.Size = UDim2.new(0, 130, 1, -35); Sidebar.Position = UDim2.new(0, 0, 0, 35)
+    local Body = Instance.new("Frame", InnerFrame)
+    Body.Size = UDim2.new(1, 0, 1, -30); Body.Position = UDim2.new(0, 0, 0, 30)
+    Body.BackgroundTransparency = 1
+
+    local Sidebar = Instance.new("ScrollingFrame", Body)
     Sidebar.BackgroundColor3 = Color3.fromRGB(0, 0, 0); Sidebar.BackgroundTransparency = 0.5
-    Sidebar.BorderSizePixel = 0; Sidebar.ScrollBarThickness = 0
+    Sidebar.Size = UDim2.new(0, 110, 1, 0); Sidebar.BorderSizePixel = 0
+    Sidebar.ScrollBarThickness = 2
     local SideList = Instance.new("UIListLayout", Sidebar); SideList.Padding = UDim.new(0, 2)
 
-    local ContentContainer = Instance.new("Frame", MF)
-    ContentContainer.Size = UDim2.new(1, -140, 1, -45)
-    ContentContainer.Position = UDim2.new(0, 135, 0, 40)
+    local ContentContainer = Instance.new("Frame", Body)
     ContentContainer.BackgroundTransparency = 1
+    ContentContainer.Position = UDim2.new(0, 115, 0, 0)
+    ContentContainer.Size = UDim2.new(1, -120, 1, 0)
 
     Window.Sidebar = Sidebar
     Window.ContentContainer = ContentContainer
 
-    UIS.InputBegan:Connect(function(input, gp)
-        if gp then return end
-        if input.KeyCode == Window.ToggleKey then
-            Window.IsToggled = not Window.IsToggled
-            MF.Visible = Window.IsToggled
-        end
+    -- Logika Tombol
+    CloseBtn.MouseButton1Click:Connect(function() SG:Destroy() end)
+    MinBtn.MouseButton1Click:Connect(function() 
+        MF:TweenSize(UDim2.new(0, 0, 0, 0), Enum.EasingDirection.In, Enum.EasingStyle.Back, 0.4, true, function()
+            MF.Visible = false
+            ToggleBtn.Visible = true 
+        end)
+    end)
+    ToggleBtn.MouseButton1Click:Connect(function() 
+        ToggleBtn.Visible = false
+        MF.Size = UDim2.new(0, 0, 0, 0)
+        MF.Visible = true 
+        MF:TweenSize(UDim2.new(0, 400, 0, 260), Enum.EasingDirection.Out, Enum.EasingStyle.Back, 0.5, true) 
     end)
 
     return Window
@@ -151,34 +189,39 @@ end
 
 function LuvHubUI:CreateTab(Name, Icon)
     local Tab = { ElementsCount = 0 }
+    setmetatable(Tab, LuvHubUI) -- PERBAIKAN BUG OOP DI SINI
     
     local Btn = Instance.new("TextButton", self.Sidebar)
     Btn.Size = UDim2.new(1, 0, 0, 35); Btn.BackgroundTransparency = 1; Btn.Text = ""
     
-    local Txt = Instance.new("TextLabel", Btn)
-    Txt.Text = (Icon and Icon .. "  " or "") .. Name
-    Txt.Font = Enum.Font.GothamBold; Txt.TextSize = 10; Txt.TextColor3 = self.Theme.SubText
-    Txt.Size = UDim2.new(1, -15, 1, 0); Txt.Position = UDim2.new(0, 15, 0, 0)
-    Txt.BackgroundTransparency = 1; Txt.TextXAlignment = Enum.TextXAlignment.Left
+    local IcoL = Instance.new("TextLabel", Btn)
+    IcoL.Text = Icon or ""; IcoL.Size = UDim2.new(0, 30, 1, 0)
+    IcoL.TextColor3 = self.Theme.SubText; IcoL.BackgroundTransparency = 1; IcoL.TextSize = 14
+    
+    local TxtL = Instance.new("TextLabel", Btn)
+    TxtL.Text = Name; TxtL.Font = Enum.Font.GothamBold; TxtL.TextSize = 9
+    TxtL.TextColor3 = self.Theme.SubText; TxtL.Size = UDim2.new(1, -35, 1, 0)
+    TxtL.Position = UDim2.new(0, 32, 0, 0); TxtL.BackgroundTransparency = 1
+    TxtL.TextXAlignment = Enum.TextXAlignment.Left
 
     local Page = Instance.new("ScrollingFrame", self.ContentContainer)
     Page.Size = UDim2.new(1, 0, 1, 0); Page.BackgroundTransparency = 1; Page.Visible = false
     Page.ScrollBarThickness = 2; Page.ScrollBarImageColor3 = self.Theme.Accent
     local PL = Instance.new("UIListLayout", Page); PL.Padding = UDim.new(0, 6)
+    Instance.new("UIPadding", Page).PaddingTop = UDim.new(0, 5)
     
     PL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        Page.CanvasSize = UDim2.new(0, 0, 0, PL.AbsoluteContentSize.Y + 10)
+        Page.CanvasSize = UDim2.new(0, 0, 0, PL.AbsoluteContentSize.Y + 15)
     end)
 
     Btn.MouseButton1Click:Connect(function()
-        for _, t in pairs(self.Tabs) do t.Page.Visible = false; t.Txt.TextColor3 = self.Theme.SubText end
-        Page.Visible = true; Txt.TextColor3 = self.Theme.Text
+        for _, t in pairs(self.Tabs) do t.Page.Visible = false; t.IcoL.TextColor3 = self.Theme.SubText; t.TxtL.TextColor3 = self.Theme.SubText end
+        Page.Visible = true; IcoL.TextColor3 = self.Theme.Accent; TxtL.TextColor3 = self.Theme.Text
     end)
 
-    table.insert(self.Tabs, {Page = Page, Txt = Txt})
+    table.insert(self.Tabs, {Page = Page, IcoL = IcoL, TxtL = TxtL})
     Tab.Page = Page
     Tab.Theme = self.Theme
-    setmetatable(Tab, self)
     return Tab
 end
 
@@ -240,7 +283,7 @@ function LuvHubUI:AddToggle(Text, Default, Callback)
 
     local Lbl = Instance.new("TextLabel", F)
     Lbl.Text = Text; Lbl.TextColor3 = self.Theme.Text; Lbl.Font = Enum.Font.GothamBold; Lbl.TextSize = 10
-    Lbl.Size = UDim2.new(0, 200, 1, 0); Lbl.Position = UDim2.new(0, 10, 0, 0)
+    Lbl.Size = UDim2.new(0, 150, 1, 0); Lbl.Position = UDim2.new(0, 10, 0, 0)
     Lbl.BackgroundTransparency = 1; Lbl.TextXAlignment = Enum.TextXAlignment.Left
 
     local Tog = Instance.new("TextButton", F)
@@ -291,9 +334,9 @@ function LuvHubUI:AddSlider(Text, Min, Max, Default, Callback)
 
     local Btn = Instance.new("TextButton", SliderBg)
     Btn.Size = UDim2.new(1, 0, 1, 0); Btn.BackgroundTransparency = 1; Btn.Text = ""
-    Btn.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then Dragging = true; Update(input) end end)
-    UIS.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then Dragging = false end end)
-    UIS.InputChanged:Connect(function(input) if Dragging and input.UserInputType == Enum.UserInputType.MouseMovement then Update(input) end end)
+    Btn.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then Dragging = true; Update(input) end end)
+    UIS.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then Dragging = false end end)
+    UIS.InputChanged:Connect(function(input) if Dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then Update(input) end end)
 end
 
 function LuvHubUI:AddInput(Text, Placeholder, Callback)
@@ -313,9 +356,7 @@ function LuvHubUI:AddInput(Text, Placeholder, Callback)
     Box.TextColor3 = self.Theme.Accent; Box.Font = Enum.Font.Gotham; Box.TextSize = 9
     Instance.new("UICorner", Box).CornerRadius = UDim.new(0, 4)
     
-    Box.FocusLost:Connect(function()
-        pcall(Callback, Box.Text)
-    end)
+    Box.FocusLost:Connect(function() pcall(Callback, Box.Text) end)
 end
 
 function LuvHubUI:AddDropdown(Text, Options, Callback)
@@ -329,7 +370,7 @@ function LuvHubUI:AddDropdown(Text, Options, Callback)
 
     local Lbl = Instance.new("TextLabel", Head)
     Lbl.Text = Text; Lbl.TextColor3 = self.Theme.Text; Lbl.Font = Enum.Font.GothamBold; Lbl.TextSize = 10
-    Lbl.Size = UDim2.new(0, 200, 1, 0); Lbl.Position = UDim2.new(0, 10, 0, 0)
+    Lbl.Size = UDim2.new(0, 180, 1, 0); Lbl.Position = UDim2.new(0, 10, 0, 0)
     Lbl.BackgroundTransparency = 1; Lbl.TextXAlignment = Enum.TextXAlignment.Left
 
     local Val = Instance.new("TextLabel", Head)
@@ -339,8 +380,7 @@ function LuvHubUI:AddDropdown(Text, Options, Callback)
 
     local Arrow = Instance.new("TextLabel", Head)
     Arrow.Text = "+"; Arrow.TextColor3 = self.Theme.Accent; Arrow.Font = Enum.Font.GothamBold; Arrow.TextSize = 14
-    Arrow.Size = UDim2.new(0, 20, 1, 0); Arrow.Position = UDim2.new(1, -25, 0, 0)
-    Arrow.BackgroundTransparency = 1
+    Arrow.Size = UDim2.new(0, 20, 1, 0); Arrow.Position = UDim2.new(1, -25, 0, 0); Arrow.BackgroundTransparency = 1
 
     local Scroll = Instance.new("ScrollingFrame", F)
     Scroll.Size = UDim2.new(1, -20, 1, -40); Scroll.Position = UDim2.new(0, 10, 0, 35)
@@ -364,9 +404,7 @@ function LuvHubUI:AddDropdown(Text, Options, Callback)
         Btn.TextXAlignment = Enum.TextXAlignment.Left
 
         Btn.MouseButton1Click:Connect(function()
-            Val.Text = opt
-            Toggle()
-            pcall(Callback, opt)
+            Val.Text = opt; Toggle(); pcall(Callback, opt)
         end)
     end
     Scroll.CanvasSize = UDim2.new(0, 0, 0, SL.AbsoluteContentSize.Y)
@@ -383,7 +421,7 @@ function LuvHubUI:AddMultiDropdown(Text, Options, Callback)
 
     local Lbl = Instance.new("TextLabel", Head)
     Lbl.Text = Text; Lbl.TextColor3 = self.Theme.Text; Lbl.Font = Enum.Font.GothamBold; Lbl.TextSize = 10
-    Lbl.Size = UDim2.new(0, 200, 1, 0); Lbl.Position = UDim2.new(0, 10, 0, 0)
+    Lbl.Size = UDim2.new(0, 180, 1, 0); Lbl.Position = UDim2.new(0, 10, 0, 0)
     Lbl.BackgroundTransparency = 1; Lbl.TextXAlignment = Enum.TextXAlignment.Left
 
     local Val = Instance.new("TextLabel", Head)
@@ -393,8 +431,7 @@ function LuvHubUI:AddMultiDropdown(Text, Options, Callback)
 
     local Arrow = Instance.new("TextLabel", Head)
     Arrow.Text = "+"; Arrow.TextColor3 = self.Theme.Accent; Arrow.Font = Enum.Font.GothamBold; Arrow.TextSize = 14
-    Arrow.Size = UDim2.new(0, 20, 1, 0); Arrow.Position = UDim2.new(1, -25, 0, 0)
-    Arrow.BackgroundTransparency = 1
+    Arrow.Size = UDim2.new(0, 20, 1, 0); Arrow.Position = UDim2.new(1, -25, 0, 0); Arrow.BackgroundTransparency = 1
 
     local Scroll = Instance.new("ScrollingFrame", F)
     Scroll.Size = UDim2.new(1, -20, 1, -40); Scroll.Position = UDim2.new(0, 10, 0, 35)
@@ -418,88 +455,25 @@ function LuvHubUI:AddMultiDropdown(Text, Options, Callback)
         Btn.Text = "  " .. opt; Btn.TextColor3 = self.Theme.SubText; Btn.Font = Enum.Font.Gotham; Btn.TextSize = 9
         Btn.TextXAlignment = Enum.TextXAlignment.Left
 
-        local Check = Instance.new("Frame", Btn)
-        Check.Size = UDim2.new(0, 12, 0, 12); Check.Position = UDim2.new(1, -20, 0.5, -6)
-        Check.BackgroundColor3 = Color3.fromRGB(30, 30, 35); Instance.new("UICorner", Check).CornerRadius = UDim.new(0, 2)
+        local Check = Instance.new("TextLabel", Btn)
+        Check.Size = UDim2.new(0, 20, 1, 0); Check.Position = UDim2.new(1, -25, 0, 0)
+        Check.BackgroundTransparency = 1; Check.Text = "❌"; Check.Font = Enum.Font.Gotham; Check.TextSize = 9
+        Check.TextColor3 = Color3.fromRGB(255, 80, 80)
 
         local IsSelected = false
         Btn.MouseButton1Click:Connect(function()
             IsSelected = not IsSelected
-            Check.BackgroundColor3 = IsSelected and self.Theme.Accent or Color3.fromRGB(30, 30, 35)
+            Check.Text = IsSelected and "✅" or "❌"
+            Check.TextColor3 = IsSelected and Color3.fromRGB(80, 255, 80) or Color3.fromRGB(255, 80, 80)
             Btn.TextColor3 = IsSelected and self.Theme.Accent or self.Theme.SubText
             
             if IsSelected then table.insert(Selected, opt) else
                 for i, v in ipairs(Selected) do if v == opt then table.remove(Selected, i); break end end
             end
-            
-            Val.Text = #Selected .. " Selected"
-            pcall(Callback, Selected)
+            Val.Text = #Selected .. " Selected"; pcall(Callback, Selected)
         end)
     end
     Scroll.CanvasSize = UDim2.new(0, 0, 0, SL.AbsoluteContentSize.Y)
-end
-
-function LuvHubUI:AddKeybind(Text, DefaultKey, Callback)
-    local F = Instance.new("Frame", self.Page)
-    F.Size = UDim2.new(1, -10, 0, 32); F.BackgroundColor3 = self.Theme.ElementBg
-    F.BackgroundTransparency = self.Theme.ElementTrans; Instance.new("UICorner", F).CornerRadius = UDim.new(0, 4)
-
-    local Lbl = Instance.new("TextLabel", F)
-    Lbl.Text = Text; Lbl.TextColor3 = self.Theme.Text; Lbl.Font = Enum.Font.GothamBold; Lbl.TextSize = 10
-    Lbl.Size = UDim2.new(0, 200, 1, 0); Lbl.Position = UDim2.new(0, 10, 0, 0)
-    Lbl.BackgroundTransparency = 1; Lbl.TextXAlignment = Enum.TextXAlignment.Left
-
-    local Btn = Instance.new("TextButton", F)
-    Btn.Size = UDim2.new(0, 80, 0, 20); Btn.Position = UDim2.new(1, -90, 0.5, -10)
-    Btn.BackgroundColor3 = Color3.fromRGB(20, 20, 25); Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 4)
-    
-    local KeyName = DefaultKey.Name
-    Btn.Text = KeyName; Btn.TextColor3 = self.Theme.Accent; Btn.Font = Enum.Font.GothamBold; Btn.TextSize = 9
-    
-    local Waiting = false
-    Btn.MouseButton1Click:Connect(function()
-        Waiting = true
-        Btn.Text = "..."
-    end)
-
-    UIS.InputBegan:Connect(function(input)
-        if Waiting and input.UserInputType == Enum.UserInputType.Keyboard then
-            KeyName = input.KeyCode.Name
-            Btn.Text = KeyName
-            Waiting = false
-        elseif not Waiting and input.KeyCode.Name == KeyName then
-            pcall(Callback)
-        end
-    end)
-end
-
-function LuvHubUI:AddColorPicker(Text, DefaultColor, Callback)
-    local F = Instance.new("Frame", self.Page)
-    F.Size = UDim2.new(1, -10, 0, 32); F.BackgroundColor3 = self.Theme.ElementBg
-    F.BackgroundTransparency = self.Theme.ElementTrans; Instance.new("UICorner", F).CornerRadius = UDim.new(0, 4)
-
-    local Lbl = Instance.new("TextLabel", F)
-    Lbl.Text = Text; Lbl.TextColor3 = self.Theme.Text; Lbl.Font = Enum.Font.GothamBold; Lbl.TextSize = 10
-    Lbl.Size = UDim2.new(0, 200, 1, 0); Lbl.Position = UDim2.new(0, 10, 0, 0)
-    Lbl.BackgroundTransparency = 1; Lbl.TextXAlignment = Enum.TextXAlignment.Left
-
-    local Dis = Instance.new("Frame", F)
-    Dis.Size = UDim2.new(0, 40, 0, 16); Dis.Position = UDim2.new(1, -50, 0.5, -8)
-    Dis.BackgroundColor3 = DefaultColor; Instance.new("UICorner", Dis).CornerRadius = UDim.new(0, 4)
-    local Stroke = Instance.new("UIStroke", Dis); Stroke.Color = Color3.new(1,1,1); Stroke.Transparency = 0.8
-    
-    local Btn = Instance.new("TextButton", Dis)
-    Btn.Size = UDim2.new(1, 0, 1, 0); Btn.BackgroundTransparency = 1; Btn.Text = ""
-
-    local CTable = {Color3.fromRGB(255,0,0), Color3.fromRGB(0,255,0), Color3.fromRGB(0,0,255), Color3.fromRGB(255,255,0), Color3.fromRGB(0,255,255), Color3.fromRGB(255,0,255), Color3.fromRGB(255,255,255), Color3.fromRGB(0,0,0)}
-    local Idx = 1
-
-    Btn.MouseButton1Click:Connect(function()
-        Idx = Idx + 1
-        if Idx > #CTable then Idx = 1 end
-        Dis.BackgroundColor3 = CTable[Idx]
-        pcall(Callback, CTable[Idx])
-    end)
 end
 
 return LuvHubUI
