@@ -147,53 +147,67 @@ function LuvHub.Build(Config, _isKeySystem)
     if not _isKeySystem then
         local isAuthed = false
         local authEvent = Instance.new("BindableEvent")
-        
-        local KeyUI = LuvHub.Build({
-            Title = Config.Title or "LuvHub",
-            Subtitle = "Authentication",
-            Theme = Config.Theme or "Default Blue",
-            ToggleIcon = Config.ToggleIcon
-        }, true)
+        local keyFileName = "LuvHub_Key.txt"
 
-        onMessage = function(msg)
-            pcall(function() KeyUI:Notify({Title = "System", Text = msg, Duration = 4}) end)
-        end
-
-        KeyUI:PlayIntro({ IsSupported = true, MapName = "Checking Whitelist..." })
-
-        local Tab = KeyUI:AddTab("Key System", "🔑")
-        Tab:AddInfoBox("Akses ditolak. Silakan dapatkan key untuk masuk ke dalam hub.")
-        
-        local currentKey = ""
-        Tab:AddInput("Masukkan Key", function(text) currentKey = text end, "Paste key di sini...")
-        
-        Tab:AddButton("Dapatkan Key", function()
-            pcall(copyLink)
-            KeyUI:Notify({Title = "Tersalin", Text = "Link disalin ke clipboard!", Duration = 4})
-        end, "Copy Link")
-        
-        Tab:AddButton("Verifikasi", function()
-            if currentKey == "" then 
-                KeyUI:Notify({Title = "Gagal", Text = "Key tidak boleh kosong!", Duration = 3})
-                return 
-            end
-            
-            KeyUI:Notify({Title = "Sistem", Text = "Mengecek keabsahan key...", Duration = 2})
-            
-            local valid = verifyKey(currentKey)
+        if isfile and readfile and isfile(keyFileName) then
+            local savedKey = readfile(keyFileName)
+            local valid = verifyKey(savedKey)
             if valid then
-                KeyUI:Notify({Title = "Berhasil", Text = "Key valid! Memuat script...", Duration = 3})
                 isAuthed = true
-                task.wait(1.5)
-                KeyUI.ScreenGui:Destroy()
-                authEvent:Fire()
             end
-        end, "Check")
-
-        if not isAuthed then
-            authEvent.Event:Wait()
         end
-        authEvent:Destroy()
+        
+        if not isAuthed then
+            local KeyUI = LuvHub.Build({
+                Title = Config.Title or "LuvHub",
+                Subtitle = "Authentication",
+                Theme = Config.Theme or "Default Blue",
+                ToggleIcon = Config.ToggleIcon
+            }, true)
+
+            onMessage = function(msg)
+                pcall(function() KeyUI:Notify({Title = "System", Text = msg, Duration = 4}) end)
+            end
+
+            KeyUI:PlayIntro({ IsSupported = true, MapName = "Checking Whitelist..." })
+
+            local Tab = KeyUI:AddTab("Key System", "🔑")
+            Tab:AddInfoBox("Akses ditolak. Silakan dapatkan key untuk masuk ke dalam hub.")
+            
+            local currentKey = ""
+            Tab:AddInput("Masukkan Key", function(text) currentKey = text end, "Paste key di sini...")
+            
+            Tab:AddButton("Dapatkan Key", function()
+                pcall(copyLink)
+                KeyUI:Notify({Title = "Tersalin", Text = "Link disalin ke clipboard!", Duration = 4})
+            end, "Copy Link")
+            
+            Tab:AddButton("Verifikasi", function()
+                if currentKey == "" then 
+                    KeyUI:Notify({Title = "Gagal", Text = "Key tidak boleh kosong!", Duration = 3})
+                    return 
+                end
+                
+                KeyUI:Notify({Title = "Sistem", Text = "Mengecek keabsahan key...", Duration = 2})
+                
+                local valid = verifyKey(currentKey)
+                if valid then
+                    if writefile then
+                        writefile(keyFileName, currentKey)
+                    end
+                    KeyUI:Notify({Title = "Berhasil", Text = "Key valid! Memuat script...", Duration = 3})
+                    isAuthed = true
+                    task.wait(1.5)
+                    KeyUI.ScreenGui:Destroy()
+                    authEvent:Fire()
+                end
+            end, "Check")
+
+            if not isAuthed then
+                authEvent.Event:Wait()
+            end
+            authEvent:Destroy()
+        end
     end
 
     local Window = { Tabs = {}, CurrentTheme = Config.Theme or "Default Blue" }
